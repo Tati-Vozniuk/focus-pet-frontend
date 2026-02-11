@@ -1,70 +1,91 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Focus Pet - Веб-додаток для фокусування з віртуальною твариною
 
-## Available Scripts
+Веб-версія додатку Focus Pet на Java (Spring Boot) + React. Наявні два репозиторії, один для frontend частини, інший для backend. 
 
-In the project directory, you can run:
+## Технології
 
-### `npm start`
+**Backend:**
+- Spring Boot 3.2.1
+- Spring Data JPA
+- H2 Database
+- Lombok
+- Maven
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+**Frontend:**
+- React 18.2
+- Axios
+- CSS3 (Custom styling)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Встановлення та запуск
 
-### `npm test`
+## Передумови
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Перед запуском переконайтеся, що у вас встановлено:
 
-### `npm run build`
+1. **Java 17 або новіша** 
+2. **Maven 3.6+** 
+3. **Node.js 16+ та npm** 
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Перевірте встановлення:
+```bash
+java -version
+mvn -version
+node -version
+npm -version
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Крок 1: Запуск Backend (Spring Boot)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1. Відкрийте термінал і перейдіть до папки backend:
+```bash
+cd focus-pet-app/backend
+```
 
-### `npm run eject`
+2. Зберіть проект:
+```bash
+mvn clean install
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+3. Запустіть сервер:
+```bash
+mvn spring-boot:run
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Сервер запуститься на `http://localhost:8081`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Ви побачите повідомлення:
+```
+Started FocusPetApplication in X.XXX seconds
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Крок 2: Запуск Frontend (React)
 
-## Learn More
+1. Відкрийте **новий** термінал і перейдіть до папки frontend:
+```bash
+cd focus-pet-app/frontend
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+2. Встановіть залежності (тільки при першому запуску):
+```bash
+npm install
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+3. Запустіть React додаток:
+```bash
+npm start
+```
 
-### Code Splitting
+Додаток автоматично відкриється в браузері на `http://localhost:3000`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Використання
 
-### Analyzing the Bundle Size
+Після запуску обох серверів:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+1. Відкрийте браузер і перейдіть на `http://localhost:3000`
+2. Ви побачите головний екран з вашою віртуальною твариною
+3. Доступні функції:
+   - **Feed [Ім'я тварини]** - годувати тварину (коштує 50 ⍟)
+   - **Focus now** - почати сесію фокусування
+   - **⚙️** - налаштування (змінити ім'я, тварину, ціль)
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
