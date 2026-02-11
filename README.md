@@ -2,6 +2,7 @@
 # Focus Pet - Веб-додаток для фокусування з віртуальною твариною
 
 Веб-версія додатку Focus Pet на Java (Spring Boot) + React. Наявні два репозиторії, один для frontend частини, інший для backend. 
+Version: MainViewVersion2Pt1 update
 
 ## Технології
 
