@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { petApi } from '../services/api';
 
 function FeedModal({ petState, onClose, refreshPetState, onError }) {
@@ -46,27 +46,23 @@ function FeedModal({ petState, onClose, refreshPetState, onError }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-header">Feed Your Pet</h2>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <img 
-            src={getAnimalImage(petState.animalImagePath)} 
-            alt="Pet" 
-            className="pet-image"
-          />
-          
-          <div className="money-display">
-            {petState.totalMoney} ⍟
-          </div>
-          
+          <img src={getAnimalImage(petState.animalImagePath)} alt="Pet" className="pet-image" />
+
+          <div className="money-display">{petState.totalMoney} ⍟</div>
+
           <div className="hunger-box">
-            <div className="info-number">{hungerTime.hours}h {hungerTime.minutes}m</div>
+            <div className="info-number">
+              {hungerTime.hours}h {hungerTime.minutes}m
+            </div>
             <div className="info-label">will be hungry in</div>
           </div>
-          
+
           <button className="button feed-modal-button" onClick={handleFeed}>
             Feed {petState.animalName} 50 ⍟
           </button>
-          
+
           <button className="button feed-modal-button" onClick={onClose}>
             Close
           </button>

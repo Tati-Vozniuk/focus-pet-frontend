@@ -6,7 +6,7 @@
 
 body {
   font-family: 'Montserrat', sans-serif;
-  background-color: #FFF2EA;
+  background-color: #fff2ea;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -16,7 +16,7 @@ body {
 
 .app-container {
   width: 393px;
-  background-color: #FFF2EA;
+  background-color: #fff2ea;
   padding: 10px;
   position: relative;
 }
@@ -53,7 +53,7 @@ body {
 }
 
 .button {
-  background-color: #CE9E7A;
+  background-color: #ce9e7a;
   border: 3px solid black;
   border-radius: 9px;
   color: black;
@@ -66,12 +66,12 @@ body {
 }
 
 .button:hover {
-  background-color: #A66C4A;
+  background-color: #a66c4a;
 }
 
 .button:disabled {
-  background-color: #CE9E7A;
-  color: #A66C4A;
+  background-color: #ce9e7a;
+  color: #a66c4a;
   cursor: not-allowed;
 }
 
@@ -172,7 +172,7 @@ body {
 }
 
 .modal {
-  background-color: #FFF2EA;
+  background-color: #fff2ea;
   border-radius: 9px;
   padding: 20px;
   max-width: 393px;
@@ -191,7 +191,7 @@ body {
 
 /* Feed Modal */
 .money-display {
-  background-color: #CE9E7A;
+  background-color: #ce9e7a;
   border: 3px solid black;
   border-radius: 9px;
   padding: 10px 20px;
@@ -236,7 +236,7 @@ body {
   width: 185px;
   height: 8px;
   border-radius: 5px;
-  background: #CE9E7A;
+  background: #ce9e7a;
   outline: none;
   -webkit-appearance: none;
 }
@@ -275,7 +275,7 @@ body {
 }
 
 .animal-selector {
-  background-color: #CE9E7A;
+  background-color: #ce9e7a;
   border: 3px solid black;
   border-radius: 9px;
   padding: 10px 20px;
@@ -308,11 +308,11 @@ body {
 }
 
 .input-field::placeholder {
-  color: #AAAAAA;
+  color: #aaaaaa;
 }
 
 .validation-error {
-  color: #FF3B30;
+  color: #ff3b30;
   font-size: 14px;
   font-weight: 300;
   margin-top: -10px;
@@ -358,14 +358,14 @@ body {
 }
 
 .modal::-webkit-scrollbar-track {
-  background: #FFF2EA;
+  background: #fff2ea;
 }
 
 .modal::-webkit-scrollbar-thumb {
-  background: #CE9E7A;
+  background: #ce9e7a;
   border-radius: 4px;
 }
 
 .modal::-webkit-scrollbar-thumb:hover {
-  background: #A66C4A;
+  background: #a66c4a;
 }

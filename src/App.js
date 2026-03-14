@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import MainView from './components/MainView';
 import FeedModal from './components/FeedModal';
@@ -6,6 +6,7 @@ import FocusModal from './components/FocusModal';
 import SettingsModal from './components/SettingsModal';
 import PopupModal from './components/PopupModal';
 import { petApi } from './services/api';
+import Footer from './components/Footer';
 
 function App() {
   const [petState, setPetState] = useState(null);
@@ -17,6 +18,7 @@ function App() {
 
   useEffect(() => {
     fetchPetState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPetState = async () => {
@@ -81,12 +83,8 @@ function App() {
         />
       )}
 
-      {showPopup && (
-        <PopupModal
-          message={popupMessage}
-          onClose={() => setShowPopup(false)}
-        />
-      )}
+      {showPopup && <PopupModal message={popupMessage} onClose={() => setShowPopup(false)} />}
+      <Footer />
     </div>
   );
 }
