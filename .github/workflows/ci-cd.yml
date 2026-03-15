@@ -34,12 +34,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'   # Версія Node.js
+          node-version: '20'   # Версія Node.js
           cache: 'npm'         # Кешування npm залежностей для пришвидшення збірки
 
       # Крок 3: Встановлення всіх залежностей проєкту
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       # Крок 4: Перевірка форматування коду за допомогою Prettier
       - name: Check formatting
