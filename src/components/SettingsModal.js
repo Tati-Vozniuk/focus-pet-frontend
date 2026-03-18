@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { petApi } from '../services/api';
+import PetService from '../services/petService';
 
 function SettingsModal({ petState, onClose, refreshPetState, onError }) {
   const [username, setUsername] = useState('');
   const [animalName, setAnimalName] = useState('');
   const [focusGoal, setFocusGoal] = useState('');
   const [selectedAnimal, setSelectedAnimal] = useState('bear_img.png');
-
+  
   const [usernameError, setUsernameError] = useState('');
   const [animalNameError, setAnimalNameError] = useState('');
   const [goalError, setGoalError] = useState('');
@@ -71,14 +71,14 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
 
   const handleAnimalChange = (e) => {
     const animalMap = {
-      Bear: 'bear_img.png',
-      Cat: 'cat_img.png',
-      Bunny: 'bunny_img.png',
+      'Bear': 'bear_img.png',
+      'Cat': 'cat_img.png',
+      'Bunny': 'bunny_img.png',
     };
     setSelectedAnimal(animalMap[e.target.value]);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     const isUsernameValid = validateUsername(username);
     const isAnimalNameValid = validateAnimalName(animalName);
     const isGoalValid = validateGoal(focusGoal);
@@ -104,13 +104,13 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
     }
 
     try {
-      await petApi.updateSettings({
+      PetService.updateSettings({
         username: username.trim(),
         animalName: animalName.trim(),
         focusGoal: parseInt(focusGoal),
         animalImagePath: selectedAnimal,
       });
-      await refreshPetState();
+      refreshPetState();
       onClose();
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -140,10 +140,14 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal settings-modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-header">Settings</h2>
-
-        <img src={getAnimalImage(selectedAnimal)} alt="Pet" className="pet-image" />
-
-        <select
+        
+        <img 
+          src={getAnimalImage(selectedAnimal)} 
+          alt="Pet" 
+          className="pet-image"
+        />
+        
+        <select 
           className="animal-selector"
           value={getCurrentAnimalName()}
           onChange={handleAnimalChange}
@@ -152,7 +156,7 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
           <option>Cat</option>
           <option>Bunny</option>
         </select>
-
+        
         <label className="input-label">Your name</label>
         <input
           type="text"
@@ -162,7 +166,7 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
           onChange={handleUsernameChange}
         />
         {usernameError && <div className="validation-error">{usernameError}</div>}
-
+        
         <label className="input-label">Animal name</label>
         <input
           type="text"
@@ -172,7 +176,7 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
           onChange={handleAnimalNameChange}
         />
         {animalNameError && <div className="validation-error">{animalNameError}</div>}
-
+        
         <label className="input-label">Daily focus goal (min)</label>
         <input
           type="text"
@@ -182,7 +186,7 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
           onChange={handleGoalChange}
         />
         {goalError && <div className="validation-error">{goalError}</div>}
-
+        
         <button className="button save-button" onClick={handleSave}>
           Save
         </button>

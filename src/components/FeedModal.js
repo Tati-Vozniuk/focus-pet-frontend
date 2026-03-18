@@ -1,35 +1,28 @@
-import { useState, useEffect } from 'react';
-import { petApi } from '../services/api';
+import { useState, useEffect, useCallback } from 'react';
+import PetService from '../services/petService';
 
 function FeedModal({ petState, onClose, refreshPetState, onError }) {
   const [hungerTime, setHungerTime] = useState({ hours: 0, minutes: 0 });
 
-  useEffect(() => {
-    fetchHungerTime();
-    const interval = setInterval(fetchHungerTime, 2500);
-    return () => clearInterval(interval);
+  // Використовуємо useCallback
+  const updateHungerTime = useCallback(() => {
+    const time = PetService.getHungerTime(petState);
+    setHungerTime(time);
   }, [petState]);
 
-  const fetchHungerTime = async () => {
-    try {
-      const data = await petApi.getHungerTime();
-      setHungerTime(data);
-    } catch (error) {
-      console.error('Error fetching hunger time:', error);
-    }
-  };
+  useEffect(() => {
+    updateHungerTime();
+    const interval = setInterval(updateHungerTime, 2500);
+    return () => clearInterval(interval);
+  }, [updateHungerTime]);
 
-  const handleFeed = async () => {
+  const handleFeed = () => {
     try {
-      await petApi.feedPet();
-      await refreshPetState();
-      fetchHungerTime();
+      PetService.feedPet();
+      refreshPetState();
+      updateHungerTime();
     } catch (error) {
-      if (error.response && error.response.data && error.response.data.error) {
-        onError(error.response.data.error);
-      } else {
-        onError("You don't have enough money to feed your pet!");
-      }
+      onError(error.message);
     }
   };
 
@@ -46,23 +39,27 @@ function FeedModal({ petState, onClose, refreshPetState, onError }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-header">Feed Your Pet</h2>
-
+        
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <img src={getAnimalImage(petState.animalImagePath)} alt="Pet" className="pet-image" />
-
-          <div className="money-display">{petState.totalMoney} ⍟</div>
-
+          <img 
+            src={getAnimalImage(petState.animalImagePath)} 
+            alt="Pet" 
+            className="pet-image"
+          />
+          
+          <div className="money-display">
+            {petState.totalMoney} ⍟
+          </div>
+          
           <div className="hunger-box">
-            <div className="info-number">
-              {hungerTime.hours}h {hungerTime.minutes}m
-            </div>
+            <div className="info-number">{hungerTime.hours}h {hungerTime.minutes}m</div>
             <div className="info-label">will be hungry in</div>
           </div>
-
+          
           <button className="button feed-modal-button" onClick={handleFeed}>
             Feed {petState.animalName} 50 ⍟
           </button>
-
+          
           <button className="button feed-modal-button" onClick={onClose}>
             Close
           </button>

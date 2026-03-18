@@ -1,10 +1,30 @@
-import { useState, useEffect } from 'react';
-import { petApi } from '../services/api';
+import { useState, useEffect, useCallback } from 'react';
+import PetService from '../services/petService';
 
 function FocusModal({ petState, onClose, refreshPetState, onComplete }) {
   const [sliderValue, setSliderValue] = useState(60);
   const [timerRunning, setTimerRunning] = useState(false);
   const [remainingTime, setRemainingTime] = useState(0);
+  const [completed, setCompleted] = useState(false); // ← Додано прапорець
+
+  // Використовуємо useCallback для handleComplete
+  const handleComplete = useCallback(() => {
+    // Перевірка: якщо вже завершено - не виконувати повторно
+    if (completed) {
+      return;
+    }
+
+    setTimerRunning(false);
+    setCompleted(true); // ← Позначити як завершено
+
+    try {
+      PetService.completeFocusSession(sliderValue);
+      refreshPetState();
+      onComplete(sliderValue);
+    } catch (error) {
+      console.error('Error completing focus session:', error);
+    }
+  }, [sliderValue, refreshPetState, onComplete, completed]); // ← Додано completed
 
   useEffect(() => {
     let interval;
@@ -12,38 +32,32 @@ function FocusModal({ petState, onClose, refreshPetState, onComplete }) {
       interval = setInterval(() => {
         setRemainingTime((prev) => {
           if (prev <= 1) {
-            handleComplete();
+            // НЕ викликаємо handleComplete тут напряму
+            // Просто зупиняємо таймер
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
+    } else if (timerRunning && remainingTime === 0) {
+      // Коли таймер досяг 0 - виконати завершення
+      handleComplete();
     }
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timerRunning, remainingTime]);
+  }, [timerRunning, remainingTime, handleComplete]);
 
   const handleStart = () => {
     if (!timerRunning) {
       setRemainingTime(sliderValue * 60);
       setTimerRunning(true);
+      setCompleted(false); // ← Скинути прапорець при старті
     }
   };
 
   const handleReset = () => {
     setTimerRunning(false);
     setRemainingTime(sliderValue * 60);
-  };
-
-  const handleComplete = async () => {
-    setTimerRunning(false);
-    try {
-      await petApi.completeFocusSession(sliderValue);
-      await refreshPetState();
-      onComplete(sliderValue);
-    } catch (error) {
-      console.error('Error completing focus session:', error);
-    }
+    setCompleted(false); // ← Скинути прапорець при reset
   };
 
   const formatTime = () => {
@@ -68,11 +82,15 @@ function FocusModal({ petState, onClose, refreshPetState, onComplete }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal focus-modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-header">Time To Focus</h2>
-
-        <img src={getAnimalImage(petState.animalImagePath)} alt="Pet" className="pet-image" />
-
+        
+        <img 
+          src={getAnimalImage(petState.animalImagePath)} 
+          alt="Pet" 
+          className="pet-image"
+        />
+        
         <div className="timer-display">{formatTime()}</div>
-
+        
         <div className="slider-container">
           <input
             type="range"
@@ -84,12 +102,19 @@ function FocusModal({ petState, onClose, refreshPetState, onComplete }) {
             disabled={timerRunning}
           />
         </div>
-
-        <button className="button focus-modal-button" onClick={handleStart} disabled={timerRunning}>
+        
+        <button 
+          className="button focus-modal-button" 
+          onClick={handleStart}
+          disabled={timerRunning}
+        >
           Focus
         </button>
-
-        <button className="button focus-modal-button" onClick={handleReset}>
+        
+        <button 
+          className="button focus-modal-button" 
+          onClick={handleReset}
+        >
           Reset
         </button>
       </div>

@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import MainView from './components/MainView';
 import FeedModal from './components/FeedModal';
 import FocusModal from './components/FocusModal';
 import SettingsModal from './components/SettingsModal';
 import PopupModal from './components/PopupModal';
-import { petApi } from './services/api';
 import Footer from './components/Footer';
+import PetService from './services/petService';
 
 function App() {
   const [petState, setPetState] = useState(null);
@@ -16,20 +16,32 @@ function App() {
   const [popupMessage, setPopupMessage] = useState('');
   const [showPopup, setShowPopup] = useState(false);
 
-  useEffect(() => {
-    fetchPetState();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchPetState = async () => {
+  // Використовуємо useCallback щоб функція не змінювалась
+  const fetchPetState = useCallback(() => {
     try {
-      const data = await petApi.getPetState();
+      const data = PetService.getPetState();
       setPetState(data);
     } catch (error) {
       console.error('Error fetching pet state:', error);
       showError('Failed to load pet data. Please refresh the page.');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Завантажити стан при запуску
+    fetchPetState();
+    
+    // Вивести інформацію про оточення в консоль (тільки в dev режимі)
+    if (process.env.REACT_APP_DEBUG === 'true') {
+      // eslint-disable-next-line no-console
+      console.log('🔧 Environment Info:', {
+        mode: process.env.REACT_APP_ENV,
+        status: process.env.REACT_APP_STATUS,
+        version: process.env.REACT_APP_VERSION,
+        storage: 'localStorage (frontend-only)',
+      });
+    }
+  }, [fetchPetState]);
 
   const showError = (message) => {
     setPopupMessage(message);
@@ -47,7 +59,7 @@ function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ paddingBottom: '40px' }}>
       <MainView
         petState={petState}
         onOpenFeed={() => setShowFeedModal(true)}
@@ -83,7 +95,13 @@ function App() {
         />
       )}
 
-      {showPopup && <PopupModal message={popupMessage} onClose={() => setShowPopup(false)} />}
+      {showPopup && (
+        <PopupModal
+          message={popupMessage}
+          onClose={() => setShowPopup(false)}
+        />
+      )}
+
       <Footer />
     </div>
   );
