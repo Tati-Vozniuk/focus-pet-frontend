@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import PetService from '../services/petService';
 
-function MainView({ 
-  petState, 
-  onOpenFeed, 
-  onOpenFocus, 
+function MainView({
+  petState,
+  onOpenFeed,
+  onOpenFocus,
   onOpenSettings,
   // refreshPetState - не використовується тут, але передається з App
 }) {
@@ -30,13 +30,13 @@ function MainView({
     if (petState) {
       updateHungerTime();
       updateRemainingFocus();
-      
+
       // Оновлювати час кожні 5 секунд
       const interval = setInterval(() => {
         updateHungerTime();
         updateRemainingFocus();
       }, 5000);
-      
+
       return () => clearInterval(interval);
     }
   }, [petState, updateHungerTime, updateRemainingFocus]);
@@ -58,20 +58,16 @@ function MainView({
     <div className="main-view">
       <h1 className="greeting-text">Hi, {petState.username}</h1>
       <p className="subtitle-text">{petState.animalName} missed you</p>
-      
-      <img 
-        src={getAnimalImage(petState.animalImagePath)} 
-        alt="Pet" 
-        className="pet-image"
-      />
-      
+
+      <img src={getAnimalImage(petState.animalImagePath)} alt="Pet" className="pet-image" />
+
       <button className="button feed-button" onClick={onOpenFeed}>
         Feed
       </button>
-      
+
       <p className="goal-text">Your daily goal is {petState.focusGoal} min</p>
       <p className="goal-text">Time left {remainingFocus} min</p>
-      
+
       <div className="info-container">
         <div className="info-box">
           <div className="info-number">{petState.totalTime}</div>
@@ -82,12 +78,14 @@ function MainView({
           <div className="info-label">times ate</div>
         </div>
       </div>
-      
+
       <div className="hunger-box">
-        <div className="info-number">{hungerTime.hours}h {hungerTime.minutes}m</div>
+        <div className="info-number">
+          {hungerTime.hours}h {hungerTime.minutes}m
+        </div>
         <div className="info-label">will be hungry in</div>
       </div>
-      
+
       <div className="button-container">
         <button className="button focus-button" onClick={onOpenFocus}>
           Focus now

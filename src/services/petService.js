@@ -31,15 +31,15 @@ class PetService {
         this.savePetState(DEFAULT_STATE);
         return DEFAULT_STATE;
       }
-      
+
       const state = JSON.parse(saved);
-      
+
       // Оновити активні годування
       this.updateActiveTimesAte(state);
-      
+
       // Перевірити чи новий день
       this.checkAndResetDailyFocus(state);
-      
+
       return state;
     } catch (error) {
       console.error('Error loading pet state:', error);
@@ -87,8 +87,8 @@ class PetService {
     const now = new Date();
     const lastFeed = new Date(state.lastFeedTime);
     const hoursSinceLastFeed = (now - lastFeed) / (1000 * 60 * 60);
-    
-    let hungerTimeHours = (6 * state.activeTimesAte) - hoursSinceLastFeed;
+
+    let hungerTimeHours = 6 * state.activeTimesAte - hoursSinceLastFeed;
     if (hungerTimeHours < 0) {
       hungerTimeHours = 0;
     }
@@ -102,7 +102,7 @@ class PetService {
   // Нагодувати тварину
   static feedPet() {
     const state = this.getPetState();
-    
+
     if (state.totalMoney < 50) {
       throw new Error("You don't have enough money to feed your pet!");
     }

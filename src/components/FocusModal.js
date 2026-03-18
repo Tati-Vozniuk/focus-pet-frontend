@@ -82,15 +82,11 @@ function FocusModal({ petState, onClose, refreshPetState, onComplete }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal focus-modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-header">Time To Focus</h2>
-        
-        <img 
-          src={getAnimalImage(petState.animalImagePath)} 
-          alt="Pet" 
-          className="pet-image"
-        />
-        
+
+        <img src={getAnimalImage(petState.animalImagePath)} alt="Pet" className="pet-image" />
+
         <div className="timer-display">{formatTime()}</div>
-        
+
         <div className="slider-container">
           <input
             type="range"
@@ -102,19 +98,12 @@ function FocusModal({ petState, onClose, refreshPetState, onComplete }) {
             disabled={timerRunning}
           />
         </div>
-        
-        <button 
-          className="button focus-modal-button" 
-          onClick={handleStart}
-          disabled={timerRunning}
-        >
+
+        <button className="button focus-modal-button" onClick={handleStart} disabled={timerRunning}>
           Focus
         </button>
-        
-        <button 
-          className="button focus-modal-button" 
-          onClick={handleReset}
-        >
+
+        <button className="button focus-modal-button" onClick={handleReset}>
           Reset
         </button>
       </div>

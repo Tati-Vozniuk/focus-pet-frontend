@@ -30,7 +30,7 @@ function App() {
   useEffect(() => {
     // Завантажити стан при запуску
     fetchPetState();
-    
+
     // Вивести інформацію про оточення в консоль (тільки в dev режимі)
     if (process.env.REACT_APP_DEBUG === 'true') {
       // eslint-disable-next-line no-console
@@ -95,12 +95,7 @@ function App() {
         />
       )}
 
-      {showPopup && (
-        <PopupModal
-          message={popupMessage}
-          onClose={() => setShowPopup(false)}
-        />
-      )}
+      {showPopup && <PopupModal message={popupMessage} onClose={() => setShowPopup(false)} />}
 
       <Footer />
     </div>
