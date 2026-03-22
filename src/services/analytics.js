@@ -2,15 +2,10 @@ import posthog from 'posthog-js';
 
 const initPostHog = () => {
   if (typeof window !== 'undefined' && !posthog.__loaded) {
-    // HARDCODE ключа для Vercel
     const POSTHOG_KEY = 'phc_hvotIm0QOtYXtm9U2ZsV3FTYQNtiy9b7nXAYx9DkfIk';
-    
-    posthog.init(POSTHOG_KEY, {
-      api_host:
-        process.env.NODE_ENV === 'production'
-          ? window.location.origin
-          : 'https://eu.i.posthog.com',
 
+    posthog.init(POSTHOG_KEY, {
+      api_host: window.location.origin + '/ingest',
       ui_host: 'https://eu.posthog.com',
 
       person_profiles: 'identified_only',
@@ -18,7 +13,7 @@ const initPostHog = () => {
       capture_pageleave: true,
       autocapture: true,
     });
-    
+
     // eslint-disable-next-line no-console
     console.log('✅ PostHog initialized');
   }
