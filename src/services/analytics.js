@@ -2,21 +2,26 @@ import posthog from 'posthog-js';
 
 const initPostHog = () => {
   if (typeof window !== 'undefined' && !posthog.__loaded) {
-    posthog.init(process.env.REACT_APP_POSTHOG_KEY, {
-      api_host: 'https://focus-pet-frontend-1.vercel.app/',
-      ui_host: 'https://eu.posthog.com',
+    const POSTHOG_KEY = 'phc_hvotIm0QOtYXtm9U2ZsV3FTYQNtiy9b7nXAYx9DkfIk';
 
+    if (!POSTHOG_KEY || POSTHOG_KEY === 'phc_hvotIm0QOtYXtm9U2ZsV3FTYQNtiy9b7nXAYx9DkfIk') {
+      console.error('PostHog key not configured!');
+      return;
+    }
+
+    posthog.init(POSTHOG_KEY, {
+      api_host:
+        process.env.NODE_ENV === 'production' ? window.location.origin : 'https://eu.i.posthog.com',
+
+      ui_host: 'https://eu.posthog.com',
       person_profiles: 'identified_only',
       capture_pageview: true,
       capture_pageleave: true,
       autocapture: true,
 
       loaded: (posthog) => {
-        if (process.env.REACT_APP_ENV === 'development') {
-          posthog.debug();
-          // eslint-disable-next-line no-console
-          console.log('PostHog host:', posthog.get_config('api_host'));
-        }
+        // eslint-disable-next-line no-console
+        console.log('✅ PostHog loaded! Host:', posthog.get_config('api_host'));
       },
     });
   }
