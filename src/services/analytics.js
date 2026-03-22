@@ -2,29 +2,25 @@ import posthog from 'posthog-js';
 
 const initPostHog = () => {
   if (typeof window !== 'undefined' && !posthog.__loaded) {
-    posthog.init(process.env.REACT_APP_POSTHOG_KEY, {
-      // На production використовуємо проксі (наш домен)
+    // HARDCODE ключа для Vercel
+    const POSTHOG_KEY = 'phc_hvotIm0QOtYXtm9U2ZsV3FTYQNtiy9b7nXAYx9DkfIk';
+    
+    posthog.init(POSTHOG_KEY, {
       api_host:
-        process.env.REACT_APP_ENV === 'production'
-          ? window.location.origin // https://your-app.vercel.app
-          : 'https://eu.i.posthog.com', // ← ВИПРАВЛЕНО тут
+        process.env.NODE_ENV === 'production'
+          ? window.location.origin
+          : 'https://eu.i.posthog.com',
 
-      // UI завжди на EU PostHog
-      ui_host: 'https://eu.posthog.com', // ← Залишається eu.posthog.com (без i)
+      ui_host: 'https://eu.posthog.com',
 
       person_profiles: 'identified_only',
       capture_pageview: true,
       capture_pageleave: true,
       autocapture: true,
-
-      loaded: (posthog) => {
-        if (process.env.REACT_APP_ENV === 'development') {
-          posthog.debug();
-          // eslint-disable-next-line no-console
-          console.log('PostHog host:', posthog.get_config('api_host'));
-        }
-      },
     });
+    
+    // eslint-disable-next-line no-console
+    console.log('✅ PostHog initialized');
   }
 
   return posthog;
