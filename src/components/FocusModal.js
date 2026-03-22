@@ -1,10 +1,57 @@
-import { useState, useEffect } from 'react';
-import { petApi } from '../services/api';
+import { useState, useEffect, useCallback } from 'react';
+import PetService from '../services/petService';
+import analytics from '../services/analytics';
 
 function FocusModal({ petState, onClose, refreshPetState, onComplete }) {
   const [sliderValue, setSliderValue] = useState(60);
   const [timerRunning, setTimerRunning] = useState(false);
   const [remainingTime, setRemainingTime] = useState(0);
+  const [completed, setCompleted] = useState(false);
+  const [startTime, setStartTime] = useState(null);
+
+  useEffect(() => {
+    // Відстежити відкриття модалки фокусування
+    analytics.capture('focus_modal_opened', {
+      currentFocusTime: petState.todayFocused,
+      focusGoal: petState.focusGoal,
+      remainingToGoal: petState.focusGoal - petState.todayFocused,
+    });
+  }, [petState]);
+
+  const handleComplete = useCallback(() => {
+    if (completed) {
+      return;
+    }
+
+    setTimerRunning(false);
+    setCompleted(true);
+
+    try {
+      const sessionDuration = sliderValue;
+      const actualDuration = startTime ? Math.floor((Date.now() - startTime) / 60000) : sliderValue;
+
+      PetService.completeFocusSession(sliderValue);
+
+      // Відстежити успішне завершення фокусування
+      analytics.capture('focus_session_completed', {
+        plannedMinutes: sessionDuration,
+        actualMinutes: actualDuration,
+        earnedMoney: sliderValue,
+        totalFocusTime: petState.totalTime + sliderValue,
+        goalCompleted: petState.todayFocused + sliderValue >= petState.focusGoal,
+      });
+
+      refreshPetState();
+      onComplete(sliderValue);
+    } catch (error) {
+      console.error('Error completing focus session:', error);
+
+      analytics.capture('focus_session_failed', {
+        error: error.message,
+        plannedMinutes: sliderValue,
+      });
+    }
+  }, [sliderValue, refreshPetState, onComplete, completed, startTime, petState]);
 
   useEffect(() => {
     let interval;
@@ -12,38 +59,68 @@ function FocusModal({ petState, onClose, refreshPetState, onComplete }) {
       interval = setInterval(() => {
         setRemainingTime((prev) => {
           if (prev <= 1) {
-            handleComplete();
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
+    } else if (timerRunning && remainingTime === 0) {
+      handleComplete();
     }
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timerRunning, remainingTime]);
+  }, [timerRunning, remainingTime, handleComplete]);
 
   const handleStart = () => {
     if (!timerRunning) {
       setRemainingTime(sliderValue * 60);
       setTimerRunning(true);
+      setCompleted(false);
+      setStartTime(Date.now());
+
+      // Відстежити початок фокусування
+      analytics.capture('focus_session_started', {
+        plannedMinutes: sliderValue,
+        currentTime: new Date().toISOString(),
+      });
     }
   };
 
   const handleReset = () => {
+    const wasRunning = timerRunning;
+    const timeElapsed = startTime ? Math.floor((Date.now() - startTime) / 60000) : 0;
+
     setTimerRunning(false);
     setRemainingTime(sliderValue * 60);
+    setCompleted(false);
+    setStartTime(null);
+
+    // Відстежити скидання (переривання)
+    if (wasRunning) {
+      analytics.capture('focus_session_cancelled', {
+        plannedMinutes: sliderValue,
+        timeElapsedMinutes: timeElapsed,
+        percentageCompleted: Math.floor((timeElapsed / sliderValue) * 100),
+      });
+    }
   };
 
-  const handleComplete = async () => {
-    setTimerRunning(false);
-    try {
-      await petApi.completeFocusSession(sliderValue);
-      await refreshPetState();
-      onComplete(sliderValue);
-    } catch (error) {
-      console.error('Error completing focus session:', error);
+  const handleClose = () => {
+    if (timerRunning) {
+      const timeElapsed = startTime ? Math.floor((Date.now() - startTime) / 60000) : 0;
+
+      // Відстежити закриття під час фокусування
+      analytics.capture('focus_modal_closed_during_session', {
+        plannedMinutes: sliderValue,
+        timeElapsedMinutes: timeElapsed,
+      });
+    } else {
+      // Відстежити закриття без старту
+      analytics.capture('focus_modal_closed', {
+        startedSession: false,
+      });
     }
+
+    onClose();
   };
 
   const formatTime = () => {
@@ -65,7 +142,7 @@ function FocusModal({ petState, onClose, refreshPetState, onComplete }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleClose}>
       <div className="modal focus-modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-header">Time To Focus</h2>
 

@@ -1,40 +1,45 @@
-import { useState, useEffect } from 'react';
-import { petApi } from '../services/api';
+import { useState, useEffect, useCallback } from 'react';
+import PetService from '../services/petService';
 
-function MainView({ petState, onOpenFeed, onOpenFocus, onOpenSettings, _refreshPetState }) {
+function MainView({
+  petState,
+  onOpenFeed,
+  onOpenFocus,
+  onOpenSettings,
+  // refreshPetState - не використовується тут, але передається з App
+}) {
   const [hungerTime, setHungerTime] = useState({ hours: 0, minutes: 0 });
   const [remainingFocus, setRemainingFocus] = useState(0);
 
-  useEffect(() => {
-    fetchHungerTime();
-    fetchRemainingFocus();
-
-    const hungerInterval = setInterval(fetchHungerTime, 5000);
-    const focusInterval = setInterval(fetchRemainingFocus, 5000);
-
-    return () => {
-      clearInterval(hungerInterval);
-      clearInterval(focusInterval);
-    };
+  // Використовуємо useCallback для стабільних функцій
+  const updateHungerTime = useCallback(() => {
+    if (petState) {
+      const time = PetService.getHungerTime(petState);
+      setHungerTime(time);
+    }
   }, [petState]);
 
-  const fetchHungerTime = async () => {
-    try {
-      const data = await petApi.getHungerTime();
-      setHungerTime(data);
-    } catch (error) {
-      console.error('Error fetching hunger time:', error);
+  const updateRemainingFocus = useCallback(() => {
+    if (petState) {
+      const remaining = PetService.getRemainingFocusTime(petState);
+      setRemainingFocus(remaining);
     }
-  };
+  }, [petState]);
 
-  const fetchRemainingFocus = async () => {
-    try {
-      const data = await petApi.getRemainingFocusTime();
-      setRemainingFocus(data.remainingMinutes);
-    } catch (error) {
-      console.error('Error fetching remaining focus:', error);
+  useEffect(() => {
+    if (petState) {
+      updateHungerTime();
+      updateRemainingFocus();
+
+      // Оновлювати час кожні 5 секунд
+      const interval = setInterval(() => {
+        updateHungerTime();
+        updateRemainingFocus();
+      }, 5000);
+
+      return () => clearInterval(interval);
     }
-  };
+  }, [petState, updateHungerTime, updateRemainingFocus]);
 
   const getAnimalImage = (imagePath) => {
     const imageMap = {
@@ -52,7 +57,7 @@ function MainView({ petState, onOpenFeed, onOpenFocus, onOpenSettings, _refreshP
   return (
     <div className="main-view">
       <h1 className="greeting-text">Hi, {petState.username}</h1>
-      <p className="subtitle-text">Your friend missed you</p>
+      <p className="subtitle-text">{petState.animalName} missed you</p>
 
       <img src={getAnimalImage(petState.animalImagePath)} alt="Pet" className="pet-image" />
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { petApi } from '../services/api';
+import PetService from '../services/petService';
+import analytics from '../services/analytics';
 
 function SettingsModal({ petState, onClose, refreshPetState, onError }) {
   const [username, setUsername] = useState('');
@@ -12,6 +13,9 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
   const [goalError, setGoalError] = useState('');
 
   useEffect(() => {
+    // Відстежити відкриття налаштувань
+    analytics.capture('settings_opened');
+
     if (petState) {
       setUsername(petState.username);
       setAnimalName(petState.animalName);
@@ -70,50 +74,91 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
   };
 
   const handleAnimalChange = (e) => {
+    const newAnimal = e.target.value;
     const animalMap = {
       Bear: 'bear_img.png',
       Cat: 'cat_img.png',
       Bunny: 'bunny_img.png',
     };
-    setSelectedAnimal(animalMap[e.target.value]);
+    const newAnimalPath = animalMap[newAnimal];
+
+    setSelectedAnimal(newAnimalPath);
+
+    // Відстежити зміну тварини
+    if (newAnimalPath !== petState.animalImagePath) {
+      analytics.capture('animal_changed', {
+        from: petState.animalImagePath,
+        to: newAnimalPath,
+      });
+    }
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     const isUsernameValid = validateUsername(username);
     const isAnimalNameValid = validateAnimalName(animalName);
     const isGoalValid = validateGoal(focusGoal);
 
     if (!isUsernameValid || !isAnimalNameValid || !isGoalValid) {
+      analytics.capture('settings_validation_failed', {
+        usernameError: !isUsernameValid,
+        animalNameError: !isAnimalNameValid,
+        goalError: !isGoalValid,
+      });
+
       onError('Please fix the validation errors before saving');
       return;
     }
 
-    if (!username.trim()) {
-      onError('Username cannot be empty');
-      return;
-    }
-
-    if (!animalName.trim()) {
-      onError('Animal name cannot be empty');
-      return;
-    }
-
-    if (!focusGoal.trim()) {
-      onError('Daily focus goal cannot be empty');
+    if (!username.trim() || !animalName.trim() || !focusGoal.trim()) {
+      onError('All fields are required');
       return;
     }
 
     try {
-      await petApi.updateSettings({
+      const changes = {};
+
+      if (username !== petState.username) {
+        changes.username = { from: petState.username, to: username };
+      }
+      if (animalName !== petState.animalName) {
+        changes.animalName = { from: petState.animalName, to: animalName };
+      }
+      if (parseInt(focusGoal) !== petState.focusGoal) {
+        changes.focusGoal = { from: petState.focusGoal, to: parseInt(focusGoal) };
+      }
+      if (selectedAnimal !== petState.animalImagePath) {
+        changes.animalType = { from: petState.animalImagePath, to: selectedAnimal };
+      }
+
+      PetService.updateSettings({
         username: username.trim(),
         animalName: animalName.trim(),
         focusGoal: parseInt(focusGoal),
         animalImagePath: selectedAnimal,
       });
-      await refreshPetState();
+
+      // Відстежити успішне збереження
+      analytics.capture('settings_saved', {
+        changes: changes,
+        changesCount: Object.keys(changes).length,
+      });
+
+      // Оновити ідентифікацію користувача
+      analytics.identify(username.trim(), {
+        animalName: animalName.trim(),
+        animalType: selectedAnimal,
+        focusGoal: parseInt(focusGoal),
+      });
+
+      refreshPetState();
       onClose();
     } catch (error) {
       console.error('Error saving settings:', error);
+
+      analytics.capture('settings_save_failed', {
+        error: error.message,
+      });
+
       onError('Failed to save settings');
     }
   };

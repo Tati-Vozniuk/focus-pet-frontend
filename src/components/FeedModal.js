@@ -1,36 +1,61 @@
-import { useState, useEffect } from 'react';
-import { petApi } from '../services/api';
+import { useState, useEffect, useCallback } from 'react';
+import PetService from '../services/petService';
+import analytics from '../services/analytics';
 
 function FeedModal({ petState, onClose, refreshPetState, onError }) {
   const [hungerTime, setHungerTime] = useState({ hours: 0, minutes: 0 });
 
   useEffect(() => {
-    fetchHungerTime();
-    const interval = setInterval(fetchHungerTime, 2500);
-    return () => clearInterval(interval);
+    // Відстежити відкриття модалки годування
+    analytics.capture('feed_modal_opened', {
+      currentMoney: petState.totalMoney,
+      hungerLevel: petState.activeTimesAte,
+    });
   }, [petState]);
 
-  const fetchHungerTime = async () => {
+  const updateHungerTime = useCallback(() => {
+    const time = PetService.getHungerTime(petState);
+    setHungerTime(time);
+  }, [petState]);
+
+  useEffect(() => {
+    updateHungerTime();
+    const interval = setInterval(updateHungerTime, 2500);
+    return () => clearInterval(interval);
+  }, [updateHungerTime]);
+
+  const handleFeed = () => {
     try {
-      const data = await petApi.getHungerTime();
-      setHungerTime(data);
+      const moneyBefore = petState.totalMoney;
+      PetService.feedPet();
+
+      // Відстежити успішне годування
+      analytics.capture('pet_fed', {
+        moneyBefore: moneyBefore,
+        moneyAfter: moneyBefore - 50,
+        totalTimesAte: petState.totalTimesAte + 1,
+        animalType: petState.animalImagePath,
+      });
+
+      refreshPetState();
+      updateHungerTime();
     } catch (error) {
-      console.error('Error fetching hunger time:', error);
+      // Відстежити помилку
+      analytics.capture('feed_failed', {
+        reason: error.message,
+        currentMoney: petState.totalMoney,
+      });
+
+      onError(error.message);
     }
   };
 
-  const handleFeed = async () => {
-    try {
-      await petApi.feedPet();
-      await refreshPetState();
-      fetchHungerTime();
-    } catch (error) {
-      if (error.response && error.response.data && error.response.data.error) {
-        onError(error.response.data.error);
-      } else {
-        onError("You don't have enough money to feed your pet!");
-      }
-    }
+  const handleClose = () => {
+    // Відстежити закриття без годування
+    analytics.capture('feed_modal_closed', {
+      fedPet: false,
+    });
+    onClose();
   };
 
   const getAnimalImage = (imagePath) => {
@@ -43,7 +68,7 @@ function FeedModal({ petState, onClose, refreshPetState, onError }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-header">Feed Your Pet</h2>
 
@@ -63,7 +88,7 @@ function FeedModal({ petState, onClose, refreshPetState, onError }) {
             Feed {petState.animalName} 50 ⍟
           </button>
 
-          <button className="button feed-modal-button" onClick={onClose}>
+          <button className="button feed-modal-button" onClick={handleClose}>
             Close
           </button>
         </div>
