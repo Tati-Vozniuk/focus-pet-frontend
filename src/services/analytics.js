@@ -5,7 +5,8 @@ const initPostHog = () => {
     const POSTHOG_KEY = 'phc_hvotIm0QOtYXtm9U2ZsV3FTYQNtiy9b7nXAYx9DkfIk';
 
     posthog.init(POSTHOG_KEY, {
-      api_host: window.location.origin + '/ingest',
+      // Використовуємо PostHog напряму (без проксі)
+      api_host: 'https://eu.i.posthog.com',
       ui_host: 'https://eu.posthog.com',
 
       person_profiles: 'identified_only',
@@ -15,7 +16,7 @@ const initPostHog = () => {
     });
 
     // eslint-disable-next-line no-console
-    console.log('✅ PostHog initialized');
+    console.log('PostHog initialized');
   }
 
   return posthog;
