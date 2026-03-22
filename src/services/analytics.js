@@ -4,11 +4,6 @@ const initPostHog = () => {
   if (typeof window !== 'undefined' && !posthog.__loaded) {
     const POSTHOG_KEY = 'phc_hvotIm0QOtYXtm9U2ZsV3FTYQNtiy9b7nXAYx9DkfIk';
 
-    if (!POSTHOG_KEY || POSTHOG_KEY === 'phc_hvotIm0QOtYXtm9U2ZsV3FTYQNtiy9b7nXAYx9DkfIk') {
-      console.error('PostHog key not configured!');
-      return;
-    }
-
     posthog.init(POSTHOG_KEY, {
       api_host:
         process.env.NODE_ENV === 'production' ? window.location.origin : 'https://eu.i.posthog.com',
@@ -21,7 +16,7 @@ const initPostHog = () => {
 
       loaded: (posthog) => {
         // eslint-disable-next-line no-console
-        console.log('✅ PostHog loaded! Host:', posthog.get_config('api_host'));
+        console.log('PostHog loaded! Host:', posthog.get_config('api_host'));
       },
     });
   }
