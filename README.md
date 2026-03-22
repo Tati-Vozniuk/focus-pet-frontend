@@ -1,8 +1,10 @@
+[![Frontend CI/CD](https://github.com/Tati-Vozniuk/focus-pet-frontend/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Tati-Vozniuk/focus-pet-frontend/actions/workflows/ci-cd.yml)
 
 # Focus Pet - Веб-додаток для фокусування з віртуальною твариною
 
 Веб-версія додатку Focus Pet на Java (Spring Boot) + React. Наявні два репозиторії, один для frontend частини, інший для backend. 
-Version: Feature2 update + Feature Pt2 update
+Version: Feature2 update + Feature Pt2 update. 
+Посилання: https://focus-pet-frontend-5fjk.vercel.app/
 
 ## Технології
 
