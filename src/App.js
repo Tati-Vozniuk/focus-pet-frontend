@@ -7,6 +7,7 @@ import SettingsModal from './components/SettingsModal';
 import PopupModal from './components/PopupModal';
 import Footer from './components/Footer';
 import PetService from './services/petService';
+import analytics from './services/analytics';
 
 function App() {
   const [petState, setPetState] = useState(null);
@@ -16,11 +17,19 @@ function App() {
   const [popupMessage, setPopupMessage] = useState('');
   const [showPopup, setShowPopup] = useState(false);
 
-  // Використовуємо useCallback щоб функція не змінювалась
   const fetchPetState = useCallback(() => {
     try {
       const data = PetService.getPetState();
       setPetState(data);
+      
+      // Ідентифікувати користувача в PostHog
+      if (data.username && data.username !== 'Username') {
+        analytics.identify(data.username, {
+          animalName: data.animalName,
+          animalType: data.animalImagePath,
+          focusGoal: data.focusGoal,
+        });
+      }
     } catch (error) {
       console.error('Error fetching pet state:', error);
       showError('Failed to load pet data. Please refresh the page.');
@@ -28,10 +37,18 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Завантажити стан при запуску
-    fetchPetState();
+    // Ініціалізувати PostHog
+    analytics.init();
+    
+    // Відстежити завантаження додатку
+    analytics.capture('app_loaded', {
+      env: process.env.REACT_APP_ENV,
+      version: process.env.REACT_APP_VERSION,
+    });
 
-    // Вивести інформацію про оточення в консоль (тільки в dev режимі)
+    // Завантажити стан
+    fetchPetState();
+    
     if (process.env.REACT_APP_DEBUG === 'true') {
       // eslint-disable-next-line no-console
       console.log('🔧 Environment Info:', {
@@ -39,6 +56,7 @@ function App() {
         status: process.env.REACT_APP_STATUS,
         version: process.env.REACT_APP_VERSION,
         storage: 'localStorage (frontend-only)',
+        analytics: 'PostHog enabled',
       });
     }
   }, [fetchPetState]);
@@ -95,7 +113,12 @@ function App() {
         />
       )}
 
-      {showPopup && <PopupModal message={popupMessage} onClose={() => setShowPopup(false)} />}
+      {showPopup && (
+        <PopupModal
+          message={popupMessage}
+          onClose={() => setShowPopup(false)}
+        />
+      )}
 
       <Footer />
     </div>
