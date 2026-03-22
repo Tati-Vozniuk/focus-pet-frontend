@@ -10,10 +10,10 @@ const initPostHog = () => {
       capture_pageview: true, // Автоматичний pageview
       capture_pageleave: true, // Коли користувач йде зі сторінки
       autocapture: true, // Автоматичне відстеження кліків
-      
+
       // Налаштування для обходу блокувальників (опціонально)
       // ui_host: 'https://eu.posthog.com',
-      
+
       // Debug режим (тільки в dev)
       loaded: (posthog) => {
         if (process.env.REACT_APP_ENV === 'development') {
@@ -22,7 +22,7 @@ const initPostHog = () => {
       },
     });
   }
-  
+
   return posthog;
 };
 

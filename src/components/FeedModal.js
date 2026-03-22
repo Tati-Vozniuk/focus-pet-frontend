@@ -28,7 +28,7 @@ function FeedModal({ petState, onClose, refreshPetState, onError }) {
     try {
       const moneyBefore = petState.totalMoney;
       PetService.feedPet();
-      
+
       // Відстежити успішне годування
       analytics.capture('pet_fed', {
         moneyBefore: moneyBefore,
@@ -36,7 +36,7 @@ function FeedModal({ petState, onClose, refreshPetState, onError }) {
         totalTimesAte: petState.totalTimesAte + 1,
         animalType: petState.animalImagePath,
       });
-      
+
       refreshPetState();
       updateHungerTime();
     } catch (error) {
@@ -45,7 +45,7 @@ function FeedModal({ petState, onClose, refreshPetState, onError }) {
         reason: error.message,
         currentMoney: petState.totalMoney,
       });
-      
+
       onError(error.message);
     }
   };
@@ -71,27 +71,23 @@ function FeedModal({ petState, onClose, refreshPetState, onError }) {
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-header">Feed Your Pet</h2>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <img 
-            src={getAnimalImage(petState.animalImagePath)} 
-            alt="Pet" 
-            className="pet-image"
-          />
-          
-          <div className="money-display">
-            {petState.totalMoney} ⍟
-          </div>
-          
+          <img src={getAnimalImage(petState.animalImagePath)} alt="Pet" className="pet-image" />
+
+          <div className="money-display">{petState.totalMoney} ⍟</div>
+
           <div className="hunger-box">
-            <div className="info-number">{hungerTime.hours}h {hungerTime.minutes}m</div>
+            <div className="info-number">
+              {hungerTime.hours}h {hungerTime.minutes}m
+            </div>
             <div className="info-label">will be hungry in</div>
           </div>
-          
+
           <button className="button feed-modal-button" onClick={handleFeed}>
             Feed {petState.animalName} 50 ⍟
           </button>
-          
+
           <button className="button feed-modal-button" onClick={handleClose}>
             Close
           </button>

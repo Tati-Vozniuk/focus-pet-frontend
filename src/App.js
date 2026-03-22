@@ -21,7 +21,7 @@ function App() {
     try {
       const data = PetService.getPetState();
       setPetState(data);
-      
+
       // Ідентифікувати користувача в PostHog
       if (data.username && data.username !== 'Username') {
         analytics.identify(data.username, {
@@ -39,7 +39,7 @@ function App() {
   useEffect(() => {
     // Ініціалізувати PostHog
     analytics.init();
-    
+
     // Відстежити завантаження додатку
     analytics.capture('app_loaded', {
       env: process.env.REACT_APP_ENV,
@@ -48,7 +48,7 @@ function App() {
 
     // Завантажити стан
     fetchPetState();
-    
+
     if (process.env.REACT_APP_DEBUG === 'true') {
       // eslint-disable-next-line no-console
       console.log('🔧 Environment Info:', {
@@ -113,12 +113,7 @@ function App() {
         />
       )}
 
-      {showPopup && (
-        <PopupModal
-          message={popupMessage}
-          onClose={() => setShowPopup(false)}
-        />
-      )}
+      {showPopup && <PopupModal message={popupMessage} onClose={() => setShowPopup(false)} />}
 
       <Footer />
     </div>
