@@ -3,10 +3,7 @@ import posthog from 'posthog-js';
 const initPostHog = () => {
   if (typeof window !== 'undefined' && !posthog.__loaded) {
     posthog.init(process.env.REACT_APP_POSTHOG_KEY, {
-      api_host:
-        process.env.REACT_APP_ENV === 'production'
-          ? window.location.origin
-          : 'https://eu.i.posthog.com',
+      api_host: 'https://focus-pet-frontend-1.vercel.app/',
       ui_host: 'https://eu.posthog.com',
 
       person_profiles: 'identified_only',
