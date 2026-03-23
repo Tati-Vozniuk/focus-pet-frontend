@@ -51,7 +51,7 @@ function App() {
 
     if (process.env.REACT_APP_DEBUG === 'true') {
       // eslint-disable-next-line no-console
-      console.log('🔧 Environment Info:', {
+      console.log('Environment Info:', {
         mode: process.env.REACT_APP_ENV,
         status: process.env.REACT_APP_STATUS,
         version: process.env.REACT_APP_VERSION,

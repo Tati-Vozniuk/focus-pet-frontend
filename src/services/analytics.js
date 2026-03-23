@@ -2,11 +2,16 @@ import posthog from 'posthog-js';
 
 const initPostHog = () => {
   if (typeof window !== 'undefined' && !posthog.__loaded) {
-    const POSTHOG_KEY = 'phc_hvotIm0QOtYXtm9U2ZsV3FTYQNtiy9b7nXAYx9DkfIk';
+    const POSTHOG_KEY = process.env.REACT_APP_POSTHOG_KEY;
+    const POSTHOG_HOST = process.env.REACT_APP_POSTHOG_HOST;
+
+    if (!POSTHOG_KEY) {
+      console.warn('PostHog key is missing');
+      return posthog;
+    }
 
     posthog.init(POSTHOG_KEY, {
-      // Використовуємо PostHog напряму (без проксі)
-      api_host: 'https://eu.i.posthog.com',
+      api_host: POSTHOG_HOST,
       ui_host: 'https://eu.posthog.com',
 
       person_profiles: 'identified_only',
@@ -14,7 +19,6 @@ const initPostHog = () => {
       capture_pageleave: true,
       autocapture: true,
     });
-
     // eslint-disable-next-line no-console
     console.log('PostHog initialized');
   }
