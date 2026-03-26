@@ -6,7 +6,6 @@ function PremiumButton() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Дочекатись завантаження feature flags
     analytics.onFeatureFlags(() => {
       const isEnabled = analytics.isFeatureEnabled('show-premium-button');
       setShowButton(isEnabled);
@@ -17,18 +16,15 @@ function PremiumButton() {
     });
   }, []);
 
-  // Не показувати поки завантажується
   if (loading) {
     return null;
   }
 
-  // Якщо feature flag вимкнений - не показувати кнопку
   if (!showButton) {
     return null;
   }
 
   const handleClick = () => {
-    // Відстежити клік
     analytics.capture('premium_button_clicked');
 
     alert(

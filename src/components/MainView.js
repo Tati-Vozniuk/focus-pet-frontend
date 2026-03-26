@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import PetService from '../services/petService';
-import PremiumButton from './PremiumButton';
 
 function MainView({ petState, onOpenFeed, onOpenFocus, onOpenSettings }) {
   const [hungerTime, setHungerTime] = useState({ hours: 0, minutes: 0 });
@@ -57,9 +56,6 @@ function MainView({ petState, onOpenFeed, onOpenFocus, onOpenSettings }) {
       <button className="button feed-button" onClick={onOpenFeed}>
         Feed
       </button>
-
-      {/* Premium кнопка */}
-      <PremiumButton />
 
       <p className="goal-text">Your daily goal is {petState.focusGoal} min</p>
       <p className="goal-text">Time left {remainingFocus} min</p>
