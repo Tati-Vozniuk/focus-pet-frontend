@@ -1,17 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import PetService from '../services/petService';
+import PremiumButton from './PremiumButton';
 
-function MainView({
-  petState,
-  onOpenFeed,
-  onOpenFocus,
-  onOpenSettings,
-  // refreshPetState - не використовується тут, але передається з App
-}) {
+function MainView({ petState, onOpenFeed, onOpenFocus, onOpenSettings }) {
   const [hungerTime, setHungerTime] = useState({ hours: 0, minutes: 0 });
   const [remainingFocus, setRemainingFocus] = useState(0);
 
-  // Використовуємо useCallback для стабільних функцій
   const updateHungerTime = useCallback(() => {
     if (petState) {
       const time = PetService.getHungerTime(petState);
@@ -31,7 +25,6 @@ function MainView({
       updateHungerTime();
       updateRemainingFocus();
 
-      // Оновлювати час кожні 5 секунд
       const interval = setInterval(() => {
         updateHungerTime();
         updateRemainingFocus();
@@ -64,6 +57,9 @@ function MainView({
       <button className="button feed-button" onClick={onOpenFeed}>
         Feed
       </button>
+
+      {/* Premium кнопка */}
+      <PremiumButton />
 
       <p className="goal-text">Your daily goal is {petState.focusGoal} min</p>
       <p className="goal-text">Time left {remainingFocus} min</p>
