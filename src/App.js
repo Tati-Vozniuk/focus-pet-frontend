@@ -5,7 +5,6 @@ import FeedModal from './components/FeedModal';
 import FocusModal from './components/FocusModal';
 import SettingsModal from './components/SettingsModal';
 import PopupModal from './components/PopupModal';
-import Footer from './components/Footer';
 import PetService from './services/petService';
 import analytics from './services/analytics';
 
@@ -114,8 +113,6 @@ function App() {
       )}
 
       {showPopup && <PopupModal message={popupMessage} onClose={() => setShowPopup(false)} />}
-
-      <Footer />
     </div>
   );
 }
