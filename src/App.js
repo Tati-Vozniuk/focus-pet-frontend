@@ -5,8 +5,10 @@ import FeedModal from './components/FeedModal';
 import FocusModal from './components/FocusModal';
 import SettingsModal from './components/SettingsModal';
 import PopupModal from './components/PopupModal';
+import ErrorTestButton from './components/ErrorTestButton';
 import PetService from './services/petService';
 import analytics from './services/analytics';
+import Sentry from './services/sentry';
 
 function App() {
   const [petState, setPetState] = useState(null);
@@ -28,9 +30,20 @@ function App() {
           animalType: data.animalImagePath,
           focusGoal: data.focusGoal,
         });
+
+        // Ідентифікувати користувача в Sentry
+        Sentry.setUser({
+          id: data.username,
+          username: data.username,
+          segment: data.focusGoal >= 300 ? 'power_user' : 'regular_user',
+        });
       }
     } catch (error) {
       console.error('Error fetching pet state:', error);
+
+      // Відправити помилку в Sentry
+      Sentry.captureException(error);
+
       showError('Failed to load pet data. Please refresh the page.');
     }
   }, []);
@@ -45,12 +58,12 @@ function App() {
       version: process.env.REACT_APP_VERSION,
     });
 
-    // Завантажити стан
     fetchPetState();
 
+    // Додатковий debug-блок з другого файлу
     if (process.env.REACT_APP_DEBUG === 'true') {
       // eslint-disable-next-line no-console
-      console.log(' Environment Info:', {
+      console.log('Environment Info:', {
         mode: process.env.REACT_APP_ENV,
         status: process.env.REACT_APP_STATUS,
         version: process.env.REACT_APP_VERSION,
@@ -113,6 +126,9 @@ function App() {
       )}
 
       {showPopup && <PopupModal message={popupMessage} onClose={() => setShowPopup(false)} />}
+
+      {/* Кнопки для тестування Sentry (тільки в dev) */}
+      {process.env.REACT_APP_ENV === 'development' && <ErrorTestButton />}
     </div>
   );
 }
