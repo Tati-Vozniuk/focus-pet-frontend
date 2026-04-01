@@ -179,7 +179,7 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
       'bear_img.png': 'Bear',
       'cat_img.png': 'Cat',
       'bunny_img.png': 'Bunny',
-      'wolf_img.png': '/images/wolf.png',
+      'wolf_img.png': 'Wolf',
     };
     return nameMap[selectedAnimal] || 'Bear';
   };
