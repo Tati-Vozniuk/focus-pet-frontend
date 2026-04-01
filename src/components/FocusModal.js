@@ -137,6 +137,7 @@ function FocusModal({ petState, onClose, refreshPetState, onComplete }) {
       'bear_img.png': '/images/bear.png',
       'cat_img.png': '/images/cat.png',
       'bunny_img.png': '/images/bunny.png',
+      'wolf_img.png': '/images/wolf.png',
     };
     return imageMap[imagePath] || '/images/bear.png';
   };
