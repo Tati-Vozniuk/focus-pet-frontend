@@ -5,10 +5,10 @@ import FeedModal from './components/FeedModal';
 import FocusModal from './components/FocusModal';
 import SettingsModal from './components/SettingsModal';
 import PopupModal from './components/PopupModal';
-import ErrorTestButton from './components/ErrorTestButton';
 import PetService from './services/petService';
 import analytics from './services/analytics';
 import Sentry from './services/sentry';
+// import { Analytics } from "@vercel/analytics/react"
 
 function App() {
   const [petState, setPetState] = useState(null);
@@ -126,9 +126,6 @@ function App() {
       )}
 
       {showPopup && <PopupModal message={popupMessage} onClose={() => setShowPopup(false)} />}
-
-      {/* Кнопки для тестування Sentry (тільки в dev) */}
-      {process.env.REACT_APP_ENV === 'development' && <ErrorTestButton />}
     </div>
   );
 }

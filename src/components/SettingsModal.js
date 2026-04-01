@@ -79,6 +79,7 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
       Bear: 'bear_img.png',
       Cat: 'cat_img.png',
       Bunny: 'bunny_img.png',
+      Wolf: 'wolf_img.png',
     };
     const newAnimalPath = animalMap[newAnimal];
 
@@ -168,6 +169,7 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
       'bear_img.png': '/images/bear.png',
       'cat_img.png': '/images/cat.png',
       'bunny_img.png': '/images/bunny.png',
+      'wolf_img.png': '/images/wolf.png',
     };
     return imageMap[imagePath] || '/images/bear.png';
   };
@@ -177,6 +179,7 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
       'bear_img.png': 'Bear',
       'cat_img.png': 'Cat',
       'bunny_img.png': 'Bunny',
+      'wolf_img.png': '/images/wolf.png',
     };
     return nameMap[selectedAnimal] || 'Bear';
   };
@@ -196,6 +199,7 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
           <option>Bear</option>
           <option>Cat</option>
           <option>Bunny</option>
+          <option>Wolf</option>
         </select>
 
         <label className="input-label">Your name</label>
