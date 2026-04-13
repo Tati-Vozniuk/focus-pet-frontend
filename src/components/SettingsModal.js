@@ -7,13 +7,13 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
   const [animalName, setAnimalName] = useState('');
   const [focusGoal, setFocusGoal] = useState('');
   const [selectedAnimal, setSelectedAnimal] = useState('bear_img.png');
+  const [saving, setSaving] = useState(false);
 
   const [usernameError, setUsernameError] = useState('');
   const [animalNameError, setAnimalNameError] = useState('');
   const [goalError, setGoalError] = useState('');
 
   useEffect(() => {
-    // Відстежити відкриття налаштувань
     analytics.capture('settings_opened');
 
     if (petState) {
@@ -55,24 +55,6 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
     return true;
   };
 
-  const handleUsernameChange = (e) => {
-    const value = e.target.value;
-    setUsername(value);
-    validateUsername(value);
-  };
-
-  const handleAnimalNameChange = (e) => {
-    const value = e.target.value;
-    setAnimalName(value);
-    validateAnimalName(value);
-  };
-
-  const handleGoalChange = (e) => {
-    const value = e.target.value;
-    setFocusGoal(value);
-    validateGoal(value);
-  };
-
   const handleAnimalChange = (e) => {
     const newAnimal = e.target.value;
     const animalMap = {
@@ -82,96 +64,14 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
       Wolf: 'wolf_img.png',
     };
     const newAnimalPath = animalMap[newAnimal];
-
     setSelectedAnimal(newAnimalPath);
 
-    // Відстежити зміну тварини
     if (newAnimalPath !== petState.animalImagePath) {
       analytics.capture('animal_changed', {
         from: petState.animalImagePath,
         to: newAnimalPath,
       });
     }
-  };
-
-  const handleSave = () => {
-    const isUsernameValid = validateUsername(username);
-    const isAnimalNameValid = validateAnimalName(animalName);
-    const isGoalValid = validateGoal(focusGoal);
-
-    if (!isUsernameValid || !isAnimalNameValid || !isGoalValid) {
-      analytics.capture('settings_validation_failed', {
-        usernameError: !isUsernameValid,
-        animalNameError: !isAnimalNameValid,
-        goalError: !isGoalValid,
-      });
-
-      onError('Please fix the validation errors before saving');
-      return;
-    }
-
-    if (!username.trim() || !animalName.trim() || !focusGoal.trim()) {
-      onError('All fields are required');
-      return;
-    }
-
-    try {
-      const changes = {};
-
-      if (username !== petState.username) {
-        changes.username = { from: petState.username, to: username };
-      }
-      if (animalName !== petState.animalName) {
-        changes.animalName = { from: petState.animalName, to: animalName };
-      }
-      if (parseInt(focusGoal) !== petState.focusGoal) {
-        changes.focusGoal = { from: petState.focusGoal, to: parseInt(focusGoal) };
-      }
-      if (selectedAnimal !== petState.animalImagePath) {
-        changes.animalType = { from: petState.animalImagePath, to: selectedAnimal };
-      }
-
-      PetService.updateSettings({
-        username: username.trim(),
-        animalName: animalName.trim(),
-        focusGoal: parseInt(focusGoal),
-        animalImagePath: selectedAnimal,
-      });
-
-      // Відстежити успішне збереження
-      analytics.capture('settings_saved', {
-        changes: changes,
-        changesCount: Object.keys(changes).length,
-      });
-
-      // Оновити ідентифікацію користувача
-      analytics.identify(username.trim(), {
-        animalName: animalName.trim(),
-        animalType: selectedAnimal,
-        focusGoal: parseInt(focusGoal),
-      });
-
-      refreshPetState();
-      onClose();
-    } catch (error) {
-      console.error('Error saving settings:', error);
-
-      analytics.capture('settings_save_failed', {
-        error: error.message,
-      });
-
-      onError('Failed to save settings');
-    }
-  };
-
-  const getAnimalImage = (imagePath) => {
-    const imageMap = {
-      'bear_img.png': '/images/bear.png',
-      'cat_img.png': '/images/cat.png',
-      'bunny_img.png': '/images/bunny.png',
-      'wolf_img.png': '/images/wolf.png',
-    };
-    return imageMap[imagePath] || '/images/bear.png';
   };
 
   const getCurrentAnimalName = () => {
@@ -184,10 +84,128 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
     return nameMap[selectedAnimal] || 'Bear';
   };
 
+  const getAnimalImage = (imagePath) => {
+    const imageMap = {
+      'bear_img.png': '/images/bear.png',
+      'cat_img.png': '/images/cat.png',
+      'bunny_img.png': '/images/bunny.png',
+      'wolf_img.png': '/images/wolf.png',
+    };
+    return imageMap[imagePath] || '/images/bear.png';
+  };
+
+  const handleSave = async () => {
+    const isUsernameValid = validateUsername(username);
+    const isAnimalNameValid = validateAnimalName(animalName);
+    const isGoalValid = validateGoal(focusGoal);
+
+    if (!isUsernameValid || !isAnimalNameValid || !isGoalValid) {
+      analytics.capture('settings_validation_failed', {
+        usernameError: !isUsernameValid,
+        animalNameError: !isAnimalNameValid,
+        goalError: !isGoalValid,
+      });
+      onError('Please fix the validation errors before saving');
+      return;
+    }
+
+    if (!username.trim() || !animalName.trim() || !focusGoal.trim()) {
+      onError('All fields are required');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const changes = {};
+      if (username !== petState.username)
+        changes.username = { from: petState.username, to: username };
+      if (animalName !== petState.animalName)
+        changes.animalName = { from: petState.animalName, to: animalName };
+      if (parseInt(focusGoal) !== petState.focusGoal)
+        changes.focusGoal = { from: petState.focusGoal, to: parseInt(focusGoal) };
+      if (selectedAnimal !== petState.animalImagePath)
+        changes.animalType = { from: petState.animalImagePath, to: selectedAnimal };
+
+      await PetService.updateSettings({
+        username: username.trim(),
+        animalName: animalName.trim(),
+        focusGoal: parseInt(focusGoal),
+        animalImagePath: selectedAnimal,
+      });
+
+      analytics.capture('settings_saved', {
+        changes,
+        changesCount: Object.keys(changes).length,
+      });
+      analytics.identify(username.trim(), {
+        animalName: animalName.trim(),
+        animalType: selectedAnimal,
+        focusGoal: parseInt(focusGoal),
+      });
+
+      await refreshPetState();
+      onClose();
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      analytics.capture('settings_save_failed', { error: error.message });
+      onError('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal settings-modal" onClick={(e) => e.stopPropagation()}>
-        <h2 className="modal-header">Settings</h2>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', position: 'relative' }}>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '0',
+              position: 'absolute',
+              left: 0,
+            }}
+            aria-label="Close"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M19 12H5"
+                stroke="#000"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 19L5 12L12 5"
+                stroke="#000"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <h2
+            style={{
+              fontSize: '35px',
+              fontWeight: 'bold',
+              color: 'black',
+              textAlign: 'center',
+              margin: 0,
+              flex: 1,
+            }}
+          >
+            Settings
+          </h2>
+        </div>
 
         <img src={getAnimalImage(selectedAnimal)} alt="Pet" className="pet-image" />
 
@@ -208,7 +226,10 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
           className="input-field"
           placeholder="single word only"
           value={username}
-          onChange={handleUsernameChange}
+          onChange={(e) => {
+            setUsername(e.target.value);
+            validateUsername(e.target.value);
+          }}
         />
         {usernameError && <div className="validation-error">{usernameError}</div>}
 
@@ -218,7 +239,10 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
           className="input-field"
           placeholder="single word only"
           value={animalName}
-          onChange={handleAnimalNameChange}
+          onChange={(e) => {
+            setAnimalName(e.target.value);
+            validateAnimalName(e.target.value);
+          }}
         />
         {animalNameError && <div className="validation-error">{animalNameError}</div>}
 
@@ -228,12 +252,15 @@ function SettingsModal({ petState, onClose, refreshPetState, onError }) {
           className="input-field"
           placeholder="numbers only"
           value={focusGoal}
-          onChange={handleGoalChange}
+          onChange={(e) => {
+            setFocusGoal(e.target.value);
+            validateGoal(e.target.value);
+          }}
         />
         {goalError && <div className="validation-error">{goalError}</div>}
 
-        <button className="button save-button" onClick={handleSave}>
-          Save
+        <button className="button save-button" onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving...' : 'Save'}
         </button>
       </div>
     </div>

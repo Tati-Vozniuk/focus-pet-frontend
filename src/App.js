@@ -5,88 +5,129 @@ import FeedModal from './components/FeedModal';
 import FocusModal from './components/FocusModal';
 import SettingsModal from './components/SettingsModal';
 import PopupModal from './components/PopupModal';
+import AuthModal from './components/AuthModal';
 import PetService from './services/petService';
 import analytics from './services/analytics';
-import Sentry from './services/sentry';
-// import { Analytics } from "@vercel/analytics/react"
+import supabase from './services/supabaseClient';
 
 function App() {
+  const [session, setSession] = useState(undefined);
   const [petState, setPetState] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [showFeedModal, setShowFeedModal] = useState(false);
   const [showFocusModal, setShowFocusModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
   const [showPopup, setShowPopup] = useState(false);
-
-  const fetchPetState = useCallback(() => {
-    try {
-      const data = PetService.getPetState();
-      setPetState(data);
-
-      // Ідентифікувати користувача в PostHog
-      if (data.username && data.username !== 'Username') {
-        analytics.identify(data.username, {
-          animalName: data.animalName,
-          animalType: data.animalImagePath,
-          focusGoal: data.focusGoal,
-        });
-
-        // Ідентифікувати користувача в Sentry
-        Sentry.setUser({
-          id: data.username,
-          username: data.username,
-          segment: data.focusGoal >= 300 ? 'power_user' : 'regular_user',
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching pet state:', error);
-
-      // Відправити помилку в Sentry
-      Sentry.captureException(error);
-
-      showError('Failed to load pet data. Please refresh the page.');
-    }
-  }, []);
-
-  useEffect(() => {
-    // Ініціалізувати PostHog
-    analytics.init();
-
-    // Відстежити завантаження додатку
-    analytics.capture('app_loaded', {
-      env: process.env.REACT_APP_ENV,
-      version: process.env.REACT_APP_VERSION,
-    });
-
-    fetchPetState();
-
-    // Додатковий debug-блок з другого файлу
-    if (process.env.REACT_APP_DEBUG === 'true') {
-      // eslint-disable-next-line no-console
-      console.log('Environment Info:', {
-        mode: process.env.REACT_APP_ENV,
-        status: process.env.REACT_APP_STATUS,
-        version: process.env.REACT_APP_VERSION,
-        storage: 'localStorage (frontend-only)',
-        analytics: 'PostHog enabled',
-      });
-    }
-  }, [fetchPetState]);
+  const [rewardAmount, setRewardAmount] = useState(0);
+  const [showReward, setShowReward] = useState(false);
 
   const showError = (message) => {
     setPopupMessage(message);
     setShowPopup(true);
   };
 
-  const showSuccess = (message) => {
-    setPopupMessage(message);
-    setShowPopup(true);
+  const showSuccess = (minutes) => {
+    setRewardAmount(minutes);
+    setShowReward(true);
   };
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        // Оновлюємо сесію тільки якщо її ще не було —
+        // тобто юзер щойно залогінився через форму.
+        // Якщо сесія вже є (TOKEN_REFRESHED або повернення на вкладку),
+        // setSession не викликаємо, щоб не перемонтувати FocusModal.
+        setSession((prev) => prev ?? session);
+      } else if (event === 'SIGNED_OUT') {
+        PetService.clearCache();
+        setSession(null);
+        setPetState(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchPetState = useCallback(async (showLoader = false) => {
+    try {
+      if (showLoader) setLoading(true);
+      const data = await PetService.getPetState();
+      setPetState(data);
+
+      if (data.username && data.username !== 'Username') {
+        analytics.identify(data.username, {
+          animalName: data.animalName,
+          animalType: data.animalImagePath,
+          focusGoal: data.focusGoal,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching pet state:', error);
+      showError('Failed to load pet data. Please refresh the page.');
+    } finally {
+      if (showLoader) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    analytics.init();
+    analytics.capture('app_loaded', {
+      env: process.env.REACT_APP_ENV,
+      version: process.env.REACT_APP_VERSION,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (session) {
+      fetchPetState(true);
+    }
+  }, [session, fetchPetState]);
 
   const handleFocusComplete = (minutes) => {
     setShowFocusModal(false);
-    showSuccess(`You've earned ${minutes} ⍟`);
+    showSuccess(minutes);
   };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    analytics.reset();
+  };
+
+  // Waiting for auth check
+  if (session === undefined) {
+    return (
+      <div
+        className="app-container"
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+      >
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <AuthModal />;
+  }
+
+  if (loading) {
+    return (
+      <div
+        className="app-container"
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+      >
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container" style={{ paddingBottom: '40px' }}>
@@ -96,6 +137,7 @@ function App() {
         onOpenFocus={() => setShowFocusModal(true)}
         onOpenSettings={() => setShowSettingsModal(true)}
         refreshPetState={fetchPetState}
+        onLogout={handleLogout}
       />
 
       {showFeedModal && petState && (
@@ -126,6 +168,10 @@ function App() {
       )}
 
       {showPopup && <PopupModal message={popupMessage} onClose={() => setShowPopup(false)} />}
+
+      {showReward && (
+        <PopupModal isReward rewardAmount={rewardAmount} onClose={() => setShowReward(false)} />
+      )}
     </div>
   );
 }

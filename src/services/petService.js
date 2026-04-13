@@ -1,11 +1,44 @@
-/**
- * PetService - Frontend-only версія (замість Spring Boot)
- * Використовує localStorage для збереження даних
- */
+import supabase from './supabaseClient';
 
-const STORAGE_KEY = 'focus_pet_state';
+let _cachedState = null;
+let _cachedUserId = null;
 
-// Початковий стан
+function dbToState(row) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    username: row.username,
+    animalName: row.animal_name,
+    animalImagePath: row.animal_type,
+    focusGoal: row.focus_goal,
+    todayFocused: row.today_focused,
+    totalTime: row.total_time,
+    totalMoney: row.total_money,
+    activeTimesAte: row.active_times_ate,
+    totalTimesAte: row.total_times_ate,
+    lastFeedTime: row.last_feed_time,
+    lastActiveUpdate: row.last_active_update,
+    focusedTimeDate: row.focused_time_date,
+  };
+}
+
+function stateToDb(state) {
+  return {
+    username: state.username,
+    animal_name: state.animalName,
+    animal_type: state.animalImagePath,
+    focus_goal: state.focusGoal,
+    today_focused: state.todayFocused,
+    total_time: state.totalTime,
+    total_money: state.totalMoney,
+    active_times_ate: state.activeTimesAte,
+    total_times_ate: state.totalTimesAte,
+    last_feed_time: state.lastFeedTime,
+    last_active_update: state.lastActiveUpdate,
+    focused_time_date: state.focusedTimeDate,
+  };
+}
+
 const DEFAULT_STATE = {
   username: 'Username',
   animalName: 'Animal',
@@ -21,141 +54,229 @@ const DEFAULT_STATE = {
   focusedTimeDate: new Date().toISOString().split('T')[0],
 };
 
+async function getCurrentUserId() {
+  if (_cachedUserId) return _cachedUserId;
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) throw new Error('User not authenticated');
+  _cachedUserId = user.id;
+  return _cachedUserId;
+}
+
 class PetService {
-  // Отримати стан з localStorage
-  static getPetState() {
+  static async getPetState() {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved) {
-        // Якщо немає збережених даних - створити початковий стан
-        this.savePetState(DEFAULT_STATE);
-        return DEFAULT_STATE;
+      const userId = await getCurrentUserId();
+
+      const { data, error } = await supabase
+        .from('pet_state')
+        .select('*')
+        .eq('user_id', userId)
+        .order('id', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return await this._createInitialState(userId);
+        }
+        throw error;
       }
 
-      const state = JSON.parse(saved);
+      let state = dbToState(data);
+      state = await this._updateActiveTimesAte(state);
+      state = await this._checkAndResetDailyFocus(state);
 
-      // Оновити активні годування
-      this.updateActiveTimesAte(state);
-
-      // Перевірити чи новий день
-      this.checkAndResetDailyFocus(state);
-
+      _cachedState = state;
       return state;
-    } catch (error) {
-      console.error('Error loading pet state:', error);
-      return DEFAULT_STATE;
+    } catch (err) {
+      console.error('getPetState error:', err);
+      return _cachedState ?? DEFAULT_STATE;
     }
   }
 
-  // Зберегти стан в localStorage
-  static savePetState(state) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      return state;
-    } catch (error) {
-      console.error('Error saving pet state:', error);
-      throw error;
-    }
+  static async savePetState(state) {
+    if (!state.id) throw new Error('Cannot save state: missing id');
+
+    const { data, error } = await supabase
+      .from('pet_state')
+      .update(stateToDb(state))
+      .eq('id', state.id)
+      .eq('user_id', state.userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const updated = dbToState(data);
+    _cachedState = updated;
+    return updated;
   }
 
-  // Оновити активні годування (кожні 6 годин -1)
-  static updateActiveTimesAte(state) {
-    const now = new Date();
-    const lastUpdate = new Date(state.lastActiveUpdate);
-    const hoursPassed = (now - lastUpdate) / (1000 * 60 * 60);
-    const periodsPassed = Math.floor(hoursPassed / 6);
+  static async feedPet() {
+    const state = await this.getPetState();
 
-    if (periodsPassed > 0 && state.activeTimesAte > 0) {
-      state.activeTimesAte = Math.max(0, state.activeTimesAte - periodsPassed);
-      state.lastActiveUpdate = now.toISOString();
-      this.savePetState(state);
+    if (state.totalMoney < 50) {
+      throw new Error("You don't have enough money to feed your pet!");
     }
+
+    const hungerLevel = state.activeTimesAte;
+    const moneyBefore = state.totalMoney;
+    const now = new Date().toISOString();
+
+    const newState = {
+      ...state,
+      totalTimesAte: state.totalTimesAte + 1,
+      activeTimesAte: state.activeTimesAte + 1,
+      lastFeedTime: now,
+      lastActiveUpdate: now, // скидаємо лічильник після годування
+      totalMoney: state.totalMoney - 50,
+    };
+
+    const saved = await this.savePetState(newState);
+
+    await supabase.from('feeding_history').insert({
+      pet_id: state.id,
+      user_id: state.userId,
+      cost: 50,
+      money_before: moneyBefore,
+      money_after: newState.totalMoney,
+      hunger_level: hungerLevel,
+    });
+
+    return saved;
   }
 
-  // Скинути щоденний фокус якщо новий день
-  static checkAndResetDailyFocus(state) {
+  static async completeFocusSession(minutes) {
+    const state = await this.getPetState();
     const today = new Date().toISOString().split('T')[0];
-    if (state.focusedTimeDate !== today) {
-      state.todayFocused = 0;
-      state.focusedTimeDate = today;
-      this.savePetState(state);
-    }
+    const earned = minutes * 2; // 1 хвилина = 2 валюти
+    const goalCompleted =
+      state.todayFocused + minutes >= state.focusGoal && state.todayFocused < state.focusGoal;
+
+    const newState = {
+      ...state,
+      totalTime: state.totalTime + minutes,
+      totalMoney: state.totalMoney + earned,
+      todayFocused: state.todayFocused + minutes,
+      focusedTimeDate: today,
+    };
+
+    const saved = await this.savePetState(newState);
+
+    await supabase.from('focus_sessions').insert({
+      pet_id: state.id,
+      user_id: state.userId,
+      completed_at: new Date().toISOString(),
+      duration_minutes: minutes,
+      earned_money: earned,
+      goal_completed: goalCompleted,
+      session_date: today,
+    });
+
+    return saved;
   }
 
-  // Отримати час до голоду
+  static async updateSettings({ username, animalName, focusGoal, animalImagePath }) {
+    const state = await this.getPetState();
+
+    const newState = {
+      ...state,
+      username: username?.trim() || state.username,
+      animalName: animalName?.trim() || state.animalName,
+      focusGoal: focusGoal > 0 ? focusGoal : state.focusGoal,
+      animalImagePath: animalImagePath?.trim() || state.animalImagePath,
+    };
+
+    return await this.savePetState(newState);
+  }
+
   static getHungerTime(state) {
     const now = new Date();
     const lastFeed = new Date(state.lastFeedTime);
     const hoursSinceLastFeed = (now - lastFeed) / (1000 * 60 * 60);
 
     let hungerTimeHours = 6 * state.activeTimesAte - hoursSinceLastFeed;
-    if (hungerTimeHours < 0) {
-      hungerTimeHours = 0;
-    }
+    if (hungerTimeHours < 0) hungerTimeHours = 0;
 
     const hours = Math.floor(hungerTimeHours);
     const minutes = Math.floor((hungerTimeHours - hours) * 60);
-
     return { hours, minutes };
   }
 
-  // Нагодувати тварину
-  static feedPet() {
-    const state = this.getPetState();
-
-    if (state.totalMoney < 50) {
-      throw new Error("You don't have enough money to feed your pet!");
-    }
-
-    state.totalTimesAte += 1;
-    state.activeTimesAte += 1;
-    state.lastFeedTime = new Date().toISOString();
-    state.totalMoney -= 50;
-
-    return this.savePetState(state);
-  }
-
-  // Завершити сесію фокусування
-  static completeFocusSession(minutes) {
-    const state = this.getPetState();
-
-    state.totalTime += minutes;
-    state.totalMoney += minutes;
-    state.todayFocused += minutes;
-    state.focusedTimeDate = new Date().toISOString().split('T')[0];
-
-    return this.savePetState(state);
-  }
-
-  // Отримати залишок до мети
   static getRemainingFocusTime(state) {
     return Math.max(0, state.focusGoal - state.todayFocused);
   }
 
-  // Оновити налаштування
-  static updateSettings({ username, animalName, focusGoal, animalImagePath }) {
-    const state = this.getPetState();
-
-    if (username && username.trim()) {
-      state.username = username.trim();
-    }
-    if (animalName && animalName.trim()) {
-      state.animalName = animalName.trim();
-    }
-    if (focusGoal && focusGoal > 0) {
-      state.focusGoal = focusGoal;
-    }
-    if (animalImagePath && animalImagePath.trim()) {
-      state.animalImagePath = animalImagePath.trim();
-    }
-
-    return this.savePetState(state);
+  static clearCache() {
+    _cachedState = null;
+    _cachedUserId = null;
   }
 
-  // Скинути всі дані (для тестування)
-  static resetAllData() {
-    localStorage.removeItem(STORAGE_KEY);
-    return DEFAULT_STATE;
+  static async resetAllData() {
+    const state = await this.getPetState();
+    if (!state.id) return DEFAULT_STATE;
+
+    await supabase.from('pet_state').delete().eq('id', state.id);
+    _cachedState = null;
+    _cachedUserId = null;
+    const userId = await getCurrentUserId();
+    return await this._createInitialState(userId);
+  }
+
+  static async _createInitialState(userId) {
+    const { data, error } = await supabase
+      .from('pet_state')
+      .insert({
+        user_id: userId,
+        username: DEFAULT_STATE.username,
+        animal_name: DEFAULT_STATE.animalName,
+        animal_type: DEFAULT_STATE.animalImagePath,
+        focus_goal: DEFAULT_STATE.focusGoal,
+        total_money: DEFAULT_STATE.totalMoney,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const state = dbToState(data);
+    _cachedState = state;
+    return state;
+  }
+
+  static async _updateActiveTimesAte(state) {
+    const now = new Date();
+    const lastUpdate = new Date(state.lastActiveUpdate);
+    const hoursPassed = (now - lastUpdate) / (1000 * 60 * 60);
+    const periodsPassed = Math.floor(hoursPassed / 6);
+
+    // Завжди оновлюємо lastActiveUpdate якщо пройшов хоча б один період,
+    // навіть якщо activeTimesAte вже 0 — щоб час не накопичувався
+    if (periodsPassed > 0) {
+      const newState = {
+        ...state,
+        activeTimesAte: Math.max(0, state.activeTimesAte - periodsPassed),
+        lastActiveUpdate: now.toISOString(),
+      };
+      return await this.savePetState(newState);
+    }
+    return state;
+  }
+
+  static async _checkAndResetDailyFocus(state) {
+    const today = new Date().toISOString().split('T')[0];
+    if (state.focusedTimeDate !== today) {
+      const newState = {
+        ...state,
+        todayFocused: 0,
+        focusedTimeDate: today,
+      };
+      return await this.savePetState(newState);
+    }
+    return state;
   }
 }
 
