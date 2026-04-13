@@ -49,7 +49,7 @@ body {
   width: 170px;
   height: 207px;
   object-fit: contain;
-  margin: 10px 0;
+  margin: 5px 0;
 }
 
 .button {
@@ -78,14 +78,15 @@ body {
 .feed-button {
   width: 170px;
   height: 44px;
+  margin-bottom: 10px;
 }
 
 .goal-text {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 300;
   color: black;
   text-align: center;
-  margin: 5px 0;
+  margin: 7px 0;
 }
 
 .info-container {
@@ -240,6 +241,7 @@ body {
   background: #ce9e7a;
   outline: none;
   -webkit-appearance: none;
+  appearance: none;
 }
 
 .slider::-webkit-slider-thumb {
@@ -329,7 +331,7 @@ body {
 /* Popup/Error Modal */
 .popup-modal {
   width: 393px;
-  height: 220px;
+  min-height: 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -346,6 +348,12 @@ body {
   color: black;
   text-align: center;
   width: 301px;
+}
+
+.popup-icon {
+  height: 28px;
+  width: 28px;
+  vertical-align: middle;
 }
 
 .close-button {
@@ -369,4 +377,102 @@ body {
 
 .modal::-webkit-scrollbar-thumb:hover {
   background: #a66c4a;
+}
+
+/* Logout button */
+.logout-button {
+  margin-top: 8px;
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 14px;
+  font-family: 'Montserrat', sans-serif;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Auth Page */
+.auth-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.auth-modal {
+  width: 100%;
+  max-width: 360px;
+  padding: 32px 28px;
+  box-sizing: border-box;
+}
+
+.auth-title {
+  font-size: 35px;
+  font-weight: bold;
+  color: black;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.auth-field .input-label {
+  margin-bottom: 0;
+}
+
+.auth-field .input-field {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-error {
+  color: #ff3b30;
+  font-size: 14px;
+  font-weight: 300;
+  text-align: center;
+  margin-bottom: 16px;
+  display: block;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.auth-message {
+  color: green;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.auth-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.auth-submit {
+  width: 100%;
+}
+
+.auth-switch {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  color: #333;
+  font-size: 14px;
+  font-family: 'Montserrat', sans-serif;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: center;
+}
+
+.auth-switch:hover {
+  opacity: 0.7;
 }

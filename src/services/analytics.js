@@ -2,7 +2,7 @@ import posthog from 'posthog-js';
 
 const initPostHog = () => {
   if (typeof window !== 'undefined' && !posthog.__loaded) {
-    const POSTHOG_KEY = 'phc_hvotIm0QOtYXtm9U2ZsV3FTYQNtiy9b7nXAYx9DkfIk';
+    const POSTHOG_KEY = process.env.REACT_APP_POSTHOG_KEY;
 
     if (!POSTHOG_KEY || POSTHOG_KEY === 'phc_hvotIm0QOtYXtm9U2ZsV3FTYQNtiy9b7nXAYx9DkfIk') {
       console.error('PostHog key not configured!');

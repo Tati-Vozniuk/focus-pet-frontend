@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import PetService from '../services/petService';
 
-function MainView({ petState, onOpenFeed, onOpenFocus, onOpenSettings }) {
+function MainView({ petState, onOpenFeed, onOpenFocus, onOpenSettings, onLogout }) {
   const [hungerTime, setHungerTime] = useState({ hours: 0, minutes: 0 });
   const [remainingFocus, setRemainingFocus] = useState(0);
 
@@ -58,8 +58,13 @@ function MainView({ petState, onOpenFeed, onOpenFocus, onOpenSettings }) {
         Feed
       </button>
 
-      <p className="goal-text">Your daily goal is {petState.focusGoal} min</p>
-      <p className="goal-text">Time left {remainingFocus} min</p>
+      <p className="goal-text">
+        {' '}
+        Your daily goal is <span style={{ fontWeight: 'bold' }}>{petState.focusGoal} min</span>
+      </p>
+      <p className="goal-text">
+        Time left <span style={{ fontWeight: 'bold' }}>{remainingFocus} min</span>
+      </p>
 
       <div className="info-container">
         <div className="info-box">
@@ -87,6 +92,10 @@ function MainView({ petState, onOpenFeed, onOpenFocus, onOpenSettings }) {
           <span className="settings-icon">⚙️</span>
         </button>
       </div>
+
+      <button onClick={onLogout} className="logout-button">
+        Log out
+      </button>
     </div>
   );
 }
