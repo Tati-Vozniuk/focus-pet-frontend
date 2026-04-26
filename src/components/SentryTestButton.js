@@ -7,7 +7,7 @@ function SentryTestButton() {
 
   useEffect(() => {
     const checkFlag = () => {
-      const isEnabled = analytics.isFeatureEnabled('show-error-test-buttons');
+      const isEnabled = analytics.isFeatureEnabled('show-error-button');
       setShowButton(!!isEnabled);
       // eslint-disable-next-line no-console
       console.log('Sentry test buttons feature flag:', isEnabled);
