@@ -3,27 +3,24 @@ import posthog from 'posthog-js';
 const initPostHog = () => {
   if (typeof window !== 'undefined' && !posthog.__loaded) {
     const POSTHOG_KEY = process.env.REACT_APP_POSTHOG_KEY;
+    const POSTHOG_HOST = process.env.REACT_APP_POSTHOG_HOST;
 
-    if (!POSTHOG_KEY || POSTHOG_KEY === 'phc_hvotIm0QOtYXtm9U2ZsV3FTYQNtiy9b7nXAYx9DkfIk') {
-      console.error('PostHog key not configured!');
-      return;
+    if (!POSTHOG_KEY) {
+      console.warn('PostHog key is missing');
+      return posthog;
     }
 
     posthog.init(POSTHOG_KEY, {
-      api_host:
-        process.env.NODE_ENV === 'production' ? window.location.origin : 'https://eu.i.posthog.com',
-
+      api_host: POSTHOG_HOST,
       ui_host: 'https://eu.posthog.com',
+
       person_profiles: 'identified_only',
       capture_pageview: true,
       capture_pageleave: true,
       autocapture: true,
-
-      loaded: (posthog) => {
-        // eslint-disable-next-line no-console
-        console.log('✅ PostHog loaded! Host:', posthog.get_config('api_host'));
-      },
     });
+    // eslint-disable-next-line no-console
+    console.log('PostHog initialized');
   }
 
   return posthog;
