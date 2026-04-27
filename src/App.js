@@ -9,6 +9,7 @@ import AuthModal from './components/AuthModal';
 import PetService from './services/petService';
 import analytics from './services/analytics';
 import supabase from './services/supabaseClient';
+import SentryTestButton from './components/SentryTestButton';
 
 function App() {
   const [session, setSession] = useState(undefined);
@@ -172,6 +173,8 @@ function App() {
       {showReward && (
         <PopupModal isReward rewardAmount={rewardAmount} onClose={() => setShowReward(false)} />
       )}
+
+      <SentryTestButton />
     </div>
   );
 }
