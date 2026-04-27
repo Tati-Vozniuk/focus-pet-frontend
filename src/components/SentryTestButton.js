@@ -13,7 +13,6 @@ function SentryTestButton() {
       console.log('Sentry test buttons feature flag:', isEnabled);
     };
 
-    // Якщо флаги вже завантажені — перевіряємо одразу
     const immediate = analytics.isFeatureEnabled('show-error-test-buttons');
     if (immediate !== undefined) {
       setShowButton(!!immediate);
