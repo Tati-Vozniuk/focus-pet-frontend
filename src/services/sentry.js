@@ -1,7 +1,6 @@
 import * as Sentry from '@sentry/react';
 
 export const initSentry = () => {
-  console.log('DSN:', process.env.REACT_APP_SENTRY_DSN);
   Sentry.init({
     dsn: process.env.REACT_APP_SENTRY_DSN,
 
